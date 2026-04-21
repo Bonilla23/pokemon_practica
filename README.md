@@ -12,3 +12,4 @@ Implementamos la estructura ( raw, processed y Curated ) donde en cada uno iran 
 Limpiando los datos con nulos, datos formateados y limpieza basica.
 
 ### 3- Modelado
+Creamos una carpeta propia para guardar el Modelado, utilizando los Clustering, dividiendoles en 5 tipos.
