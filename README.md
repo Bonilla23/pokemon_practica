@@ -9,7 +9,7 @@ Transforma datos crudos de una Pokédex en información para facilitar a los jug
 ### 2- Comprension de los Datos
 Implementamos la estructura ( raw, processed y Curated ) donde en cada uno iran sus datos correspondientes.
 
-Limpiando los datos con nulos, datos formateados y limpieza basica.
+Hemos limpiado algunos datos, intentando solucionar algunos errores y eliminando algunas caracteristicas que sobran.
 
 ### 3- Modelado
 Creamos una carpeta propia para guardar el Modelado, utilizando los Clustering, dividiendoles en 5 tipos.
