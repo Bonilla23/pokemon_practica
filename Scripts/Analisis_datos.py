@@ -7,7 +7,7 @@ spark = SparkSession.builder.appName("Analisis_Curated_NoBorrar").getOrCreate()
 
 try:
     # 1. Leer desde process
-    df_processed = spark.read.parquet("Datos/Processed")
+    df_processed = spark.read.parquet("Datos/Processed/pokedex_limpia")
     
     # 2. Transformaciones
     df_base = df_processed.withColumn(

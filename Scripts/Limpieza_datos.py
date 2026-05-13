@@ -1,59 +1,72 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col,lower
-from functools import reduce
+from pyspark.sql.functions import col, when, lit
+from pyspark.sql.types import StructType, StructField, StringType, LongType, ArrayType
 
-spark = SparkSession.builder.appName("Limpieza_datos").getOrCreate()
+spark = SparkSession.builder.appName("Limpieza_Pokemon_Definitiva").getOrCreate()
+
+# 1. ESQUEMA
+schema = StructType([
+    StructField("id", LongType(), True),
+    StructField("name", StructType([
+        StructField("english", StringType(), True),
+        StructField("japanese", StringType(), True),
+        StructField("chinese", StringType(), True),
+        StructField("french", StringType(), True)
+    ]), True),
+    StructField("type", ArrayType(StringType()), True),
+    StructField("base", StructType([
+        StructField("HP", LongType(), True),
+        StructField("Attack", LongType(), True),
+        StructField("Defense", LongType(), True),
+        StructField("Sp. Attack", LongType(), True),
+        StructField("Sp. Defense", LongType(), True),
+        StructField("Speed", LongType(), True)
+    ]), True),
+    StructField("_corrupt_record", StringType(), True) 
+])
 
 try:
-    #----------Saber que nos llega----------
-    df = spark.read.option("multiline","true").json("Datos/Raw/pokedex.json")
-    # Limitar a 10 registros
-    df_limit = df.limit(10)
-    # Mostrar los datos
-    df_limit.show(truncate=False)
-    df_limit.printSchema()
-    print()
-    #-----------------------------------------------#
-    #----------Comprobar si el ID se repite----------
-    print("Si el ID ser repite aparece aqui:")
-    df.groupBy("id").count().filter("count > 1").show()
+    print("--- Iniciando carga de datos ---")
+    
+    df = spark.read \
+        .option("multiline", "true") \
+        .schema(schema) \
+        .json("Datos/Raw/pokedex.json") \
+        .cache()
 
-    #----------Comprobar si hay nulos---------------
-    print("Si hay algun nulo aparece aqui: ")
-    df.filter(
-        reduce(lambda x, y: x | y, (col(c).isNull() for c in df.columns))
-    ).show(truncate=False)
+    # 2. LIMPIEZA INICIAL
+    # Quitamos corruptos si existen y filas sin ID/Nombre
+    if "_corrupt_record" in df.columns:
+        df = df.filter(col("_corrupt_record").isNull())
 
-    #----------Borrar el chino y el Frances---------
-    print("Borrado del idioma chino, frances y japones")
-    df_limpio = df.withColumn(
-        "name",
-    col("name").dropFields("french", "chinese", "japanese")
+    # 3. TRANSFORMACIÓN Y CORRECCIÓN (Aplanamiento directo)
+    # En lugar de withField, extraemos cada campo y aplicamos la corrección individualmente
+    # Usamos backticks `` para los campos con puntos
+    df_final = df.select(
+        col("id"),
+        col("name.english").alias("nombre"),
+        col("type").alias("tipos"),
+        # Aplicamos la lógica de corrección (si es nulo o 0, ponemos 1)
+        when(col("base.HP").isNull() | (col("base.HP") <= 0), 1).otherwise(col("base.HP")).alias("hp"),
+        when(col("base.Attack").isNull() | (col("base.Attack") <= 0), 1).otherwise(col("base.Attack")).alias("ataque"),
+        when(col("base.Defense").isNull() | (col("base.Defense") <= 0), 1).otherwise(col("base.Defense")).alias("defensa"),
+        when(col("base.`Sp. Attack`").isNull() | (col("base.`Sp. Attack`") <= 0), 1).otherwise(col("base.`Sp. Attack`")).alias("ataque_especial"),
+        when(col("base.`Sp. Defense`").isNull() | (col("base.`Sp. Defense`") <= 0), 1).otherwise(col("base.`Sp. Defense`")).alias("defensa_especial"),
+        when(col("base.Speed").isNull() | (col("base.Speed") <= 0), 1).otherwise(col("base.Speed")).alias("velocidad")
     )
 
-    #----------Como borre todos menos ingles cambiamos a nombre solo---#
-    df_limpio = df_limpio.withColumn("name", col("name.english"))
+    # 4. LIMPIEZA FINAL
+    df_final = df_final.dropna(subset=["id", "nombre"]).dropDuplicates(["id"])
 
-    #----------Comprobar que en la base ninguno es 0-------#
-    df_ceros = df_limpio.filter(
-        (col("base.Attack") == 0) |
-        (col("base.Defense") == 0) |
-        (col("base.HP") == 0) |
-        (col("base.`Sp. Attack`") == 0) |   
-        (col("base.`Sp. Defense`") == 0) | 
-        (col("base.Speed") == 0)
-    )
+    print("--- Proceso completado exitosamente ---")
+    df_final.show(10)
+    
+    # 5. GUARDADO
+    df_final.write.mode("overwrite").parquet("Datos/Processed/pokedex_limpia")
+    print(f"Total de registros guardados: {df_final.count()}")
 
-    # Mostramos los resultados (si está vacío, significa que no hay ningún 0)
-    print("Registros con alguna estadística en 0:")
-    df_ceros.show()
-
-    #----------Comprobación----------------
-    print("----------------------------")
-    df_limpio_limit = df_limpio.limit(5)
-    df_limpio_limit.show()
-
-    #----------Guardar los datos limpios---
-    df_limpio.write.mode("overwrite").parquet("Datos/Processed")
 except Exception as e:
-    print("Error al leer el fichero: ", e)
+    print(f"ERROR CRÍTICO: {e}")
+
+finally:
+    spark.stop()
