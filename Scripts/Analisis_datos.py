@@ -12,22 +12,22 @@ try:
     # 2. Transformaciones
     df_base = df_processed.withColumn(
         "Total_Stats",
-        col("base.HP") + col("base.Attack") + col("base.Defense") + 
-        col("base.`Sp. Attack`") + col("base.`Sp. Defense`") + col("base.Speed")
+        col("hp") + col("ataque") + col("defensa") + 
+        col("ataque_especial") + col("defensa_especial") + col("velocidad")
     ).withColumn(
         "Bulk_Total", 
-        col("base.HP") + col("base.Defense") + col("base.`Sp. Defense`")
+        col("hp") + col("defensa") + col("defensa_especial")
     )
 
     # --- DATASETS ESPECÍFICOS ---
-    df_top_stats = df_base.select("name", "type", "Total_Stats").orderBy(col("Total_Stats").desc())
-    df_sweepers_fisicos = df_base.filter((col("base.Attack") >= 100) & (col("base.Speed") >= 100)) \
-        .select("name", col("base.Attack").alias("Attack"), col("base.Speed").alias("Speed"), "type")
-    df_sweepers_especiales = df_base.filter((col("base.`Sp. Attack`") >= 100) & (col("base.Speed") >= 100)) \
-        .select("name", col("base.`Sp. Attack`").alias("Sp_Attack"), col("base.Speed").alias("Speed"), "type")
-    df_murallas = df_base.select("name", "Bulk_Total", "type").orderBy(col("Bulk_Total").desc())
-    df_conteo_tipos = df_base.withColumn("Tipo_Individual", explode(col("type"))) \
-        .groupBy("Tipo_Individual").agg(count("name").alias("Total_Pokemon"))
+    df_top_stats = df_base.select("nombre", "tipos", "Total_Stats").orderBy(col("Total_Stats").desc())
+    df_sweepers_fisicos = df_base.filter((col("ataque") >= 100) & (col("velocidad") >= 100)) \
+        .select("nombre", col("ataque").alias("Attack"), col("velocidad").alias("Speed"), "tipos")
+    df_sweepers_especiales = df_base.filter((col("ataque_especial") >= 100) & (col("velocidad") >= 100)) \
+        .select("nombre", col("ataque_especial").alias("Sp_Attack"), col("velocidad").alias("Speed"), "tipos")
+    df_murallas = df_base.select("nombre", "Bulk_Total", "tipos").orderBy(col("Bulk_Total").desc())
+    df_conteo_tipos = df_base.withColumn("Tipo_Individual", explode(col("tipos"))) \
+        .groupBy("Tipo_Individual").agg(count("nombre").alias("Total_Pokemon"))
 
     # --- DICCIONARIO DE RUTAS ---
     rutas = {
@@ -39,18 +39,14 @@ try:
         "full_curated": df_base 
     }
 
-    # --- GUARDADO CON MODO IGNORE ---
+    # --- GUARDADO CON MODO OVERWRITE ---
     for carpeta, dataframe in rutas.items():
         path = f"Datos/Curated/{carpeta}"
         
-        # Usamos mode("ignore") para que no intente borrar nada
-        # Si la carpeta existe, Spark simplemente no escribirá y pasará a la siguiente
-        dataframe.write.mode("ignore").parquet(path)
+        # Usamos mode("overwrite") para asegurar que los datos se actualicen
+        dataframe.write.mode("overwrite").parquet(path)
         
-        if os.path.exists(path):
-            print(f"Completado/Omitido: {path} (La carpeta ya existe o ha sido creada)")
-        else:
-            print(f"Error: No se pudo crear la carpeta {path}")
+        print(f"Completado: {path} (Datos actualizados)")
 
     print("\n--- Proceso finalizado (Modo conservador activo) ---")
 
