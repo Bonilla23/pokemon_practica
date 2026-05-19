@@ -2,6 +2,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.ml.feature import VectorAssembler, StandardScaler
 from pyspark.ml.clustering import KMeans
+from pyspark.ml.evaluation import ClusteringEvaluator
 
 spark = SparkSession.builder.appName("Modelado_Clustering").getOrCreate()
 
@@ -23,6 +24,12 @@ df_scaled = scaler_model.transform(df_vector)
 kmeans = KMeans(featuresCol="features_scaled", k=5, seed=42)
 model = kmeans.fit(df_scaled)
 predictions = model.transform(df_scaled)
+
+# EVALUACIÓN: Coeficiente de Silueta
+evaluator = ClusteringEvaluator(featuresCol="features_scaled")
+silhouette = evaluator.evaluate(predictions)
+print(f"Coeficiente de Silueta para k=5: {silhouette:.4f}")
+print("Un valor cercano a 1 indica alta cohesión de los clusters.")
 
 # 5. Preparar salida para Power BI
 resultado_final = predictions.withColumn(

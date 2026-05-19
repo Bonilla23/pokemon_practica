@@ -26,13 +26,21 @@ schema = StructType([
 ])
 
 try:
-    print("--- Iniciando carga de datos ---")
+    print("--- Iniciando ingesta de datos (Capa RAW) ---")
+    
+    # Ingesta robusta: Soporta múltiples archivos JSON si se añaden a la carpeta
+    path_raw = "Datos/Raw/*.json"
     
     df = spark.read \
         .option("multiline", "true") \
         .schema(schema) \
-        .json("Datos/Raw/pokedex.json") \
+        .json(path_raw) \
         .cache()
+
+    if df.count() == 0:
+        raise ValueError("El dataframe está vacío. Verifique la ruta Raw.")
+    
+    print(f"Número de registros cargados: {df.count()}")
 
     # 2. LIMPIEZA INICIAL
     # Quitamos corruptos si existen y filas sin ID/Nombre
