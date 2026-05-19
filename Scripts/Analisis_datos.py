@@ -3,7 +3,7 @@ from pyspark.sql.functions import col, explode, count
 import os
 
 # Iniciar sesión
-spark = SparkSession.builder.appName("Analisis_Curated_NoBorrar").getOrCreate()
+spark = SparkSession.builder.appName("Analisis_Curated").getOrCreate()
 
 try:
     # 1. Leer desde process

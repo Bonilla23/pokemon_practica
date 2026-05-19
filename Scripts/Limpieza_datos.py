@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, when, lit
 from pyspark.sql.types import StructType, StructField, StringType, LongType, ArrayType
 
-spark = SparkSession.builder.appName("Limpieza_Pokemon_Definitiva").getOrCreate()
+spark = SparkSession.builder.appName("Limpieza_Pokemon").getOrCreate()
 
 # 1. ESQUEMA
 schema = StructType([

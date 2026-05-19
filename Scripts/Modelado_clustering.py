@@ -9,7 +9,6 @@ spark = SparkSession.builder.appName("Modelado_Clustering").getOrCreate()
 df = spark.read.parquet("Datos/Processed/pokedex_limpia")
 
 # 2. Preparar los datos para ML
-# He cambiado los nombres de las columnas según tu mensaje de error
 features_clean = ["hp", "ataque", "defensa", "ataque_especial", "defensa_especial", "velocidad"]
 
 assembler = VectorAssembler(inputCols=features_clean, outputCol="features_raw")
@@ -26,13 +25,12 @@ model = kmeans.fit(df_scaled)
 predictions = model.transform(df_scaled)
 
 # 5. Preparar salida para Power BI
-# Calculamos el Total aquí mismo para asegurarnos de que exista para el Top 5
 resultado_final = predictions.withColumn(
     "total_stats", 
     F.col("hp") + F.col("ataque") + F.col("defensa") + 
     F.col("ataque_especial") + F.col("defensa_especial") + F.col("velocidad")
 ).select(
-    F.col("nombre"), # Usamos "nombre" según tu error
+    F.col("nombre"),
     "hp", "ataque", "defensa", "ataque_especial", "defensa_especial", "velocidad",
     "total_stats",
     F.col("prediction").alias("cluster_id")
