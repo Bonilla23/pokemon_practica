@@ -7,15 +7,15 @@ Se ha seleccionado la metodología **CRISP-DM** por su enfoque cíclico, flexibl
 
 1.  **Comprensión del Negocio:** El objetivo es transformar datos crudos en información para facilitar a los jugadores profesionales.
    
-2.  **Comprensión de los Datos:** Exploración del JSON original, identificando anidamientos en estadísticas (`base`) y nombres multilingües. Como podemos observar los nombres estan en ingles, japones, chino y frances, en este caso nos quedaremos con el nombre en ingles. 
+2.  **Comprensión de los Datos:** Exploración del JSON original, identificando anidamientos en estadísticas (`base`) y nombres multilingües. Como podemos observar los nombres estan en ingles, japones, chino y frances, en este caso nos quedaremos con el nombre en ingles. ( carpeta raw)
 
-3.  **Preparación de los Datos:** Limpieza de registros corruptos, IDS nulos, aplanado de estructuras anidadas y normalización de nombres de columnas al español.
+3.  **Preparación de los Datos:** Limpieza de registros corruptos, IDS nulos, aplanado de estructuras anidadas y normalización de nombres de columnas al español. ( carpeta processed)
    
-4.  **Modelado:** Aplicación de Clustering K-Means para segmentar la población Pokémon de forma objetiva.
+4.  **Modelado:** Aplicación de Clustering K-Means para segmentar la población Pokémon de forma objetiva. ( carpeta Modelado)
 
-5.  **Evaluación:** Validación de los grupos obtenidos y su utilidad en el dashboard de Power BI.
+5.  **Evaluación:** Validación de los grupos obtenidos y su utilidad en el dashboard de Power BI. ( carpeta curated)
    
-6.  **Despliegue:** Entrega de datasets en formato Parquet optimizado para BI.
+6.  **Despliegue:** Entrega de datasets en formato Parquet optimizado para BI. ( carpeta curated y carpeta Modelado)
 
 ## 2. Arquitectura de Datos y Almacenamiento
 Se utiliza una arquitectura por capas para garantizar la integridad y trazabilidad:
